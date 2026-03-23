@@ -13,7 +13,7 @@ class Circle {
         this.posX = x;
         this.posY = y;
         this.radius = radius;
-        this.baseColor = "blue"; // color normal
+        this.baseColor = "blue";
         this.color = this.baseColor;
         this.text = text;
         this.speed = speed;
@@ -25,12 +25,15 @@ class Circle {
     draw(context) {
         context.beginPath();
 
-        context.strokeStyle = this.color;
-        context.lineWidth = 2;
-
+        context.fillStyle = this.color;
         context.arc(this.posX, this.posY, this.radius, 0, Math.PI * 2);
+        context.fill();
+
+        context.strokeStyle = "black";
+        context.lineWidth = 2;
         context.stroke();
 
+        context.fillStyle = "white";
         context.textAlign = "center";
         context.textBaseline = "middle";
         context.font = "20px Arial";
@@ -40,7 +43,7 @@ class Circle {
     }
 
     update(context) {
-        // Rebote contra paredes (esto sí se mantiene)
+        // Rebote contra paredes
         if ((this.posX + this.radius) > window_width || (this.posX - this.radius) < 0) {
             this.dx = -this.dx;
         }
@@ -56,31 +59,57 @@ class Circle {
     }
 }
 
-// 🔥 FUNCIÓN DE COLISIÓN
+// 🔥 COLISIONES CON REBOTE
 function detectarColisiones(circles) {
-    // Primero todos vuelven a azul
+
+    // reset color
     circles.forEach(c => c.color = c.baseColor);
 
     for (let i = 0; i < circles.length; i++) {
         for (let j = i + 1; j < circles.length; j++) {
 
-            let dx = circles[i].posX - circles[j].posX;
-            let dy = circles[i].posY - circles[j].posY;
+            let dx = circles[j].posX - circles[i].posX;
+            let dy = circles[j].posY - circles[i].posY;
 
             let distancia = Math.sqrt(dx * dx + dy * dy);
+            let sumaRadios = circles[i].radius + circles[j].radius;
 
-            if (distancia <= circles[i].radius + circles[j].radius) {
-                // 🔴 Colisión → cambiar color
+            if (distancia < sumaRadios) {
+
+                // 🔴 Cambiar color al colisionar
                 circles[i].color = "red";
                 circles[j].color = "red";
+
+                // 🔥 NORMALIZAR VECTOR
+                let nx = dx / distancia;
+                let ny = dy / distancia;
+
+                // 🔥 INTERCAMBIO DE VELOCIDADES (rebote simple)
+                let p =
+                    2 * (circles[i].dx * nx + circles[i].dy * ny -
+                         circles[j].dx * nx - circles[j].dy * ny) / 2;
+
+                circles[i].dx = circles[i].dx - p * nx;
+                circles[i].dy = circles[i].dy - p * ny;
+
+                circles[j].dx = circles[j].dx + p * nx;
+                circles[j].dy = circles[j].dy + p * ny;
+
+                // 🔥 SEPARAR PARA EVITAR QUE SE QUEDEN PEGADOS
+                let overlap = sumaRadios - distancia;
+
+                circles[i].posX -= overlap * nx / 2;
+                circles[i].posY -= overlap * ny / 2;
+
+                circles[j].posX += overlap * nx / 2;
+                circles[j].posY += overlap * ny / 2;
             }
         }
     }
 }
 
-// 🔥 CREAR N CÍRCULOS
-let N = 10; // puedes cambiar este número
-
+// 🔢 N CÍRCULOS
+let N = 10;
 let circles = [];
 
 for (let i = 0; i < N; i++) {
@@ -91,7 +120,7 @@ for (let i = 0; i < N; i++) {
     circles.push(new Circle(x, y, radius, i + 1, 3));
 }
 
-// 🔄 ANIMACIÓN
+// 🎬 ANIMACIÓN
 function updateCircle() {
     requestAnimationFrame(updateCircle);
 
