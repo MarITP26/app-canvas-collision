@@ -1,19 +1,26 @@
-const canvas = document.getElementById("canvas");
+(function () {
+
+const canvas = document.getElementById("canvas2");
 let ctx = canvas.getContext("2d");
 
-const window_height = window.innerHeight / 2;
-const window_width = window.innerWidth / 2;
+// 🔥 USAR TAMAÑO DEL CARD (IMPORTANTE)
+const window_height = canvas.clientHeight;
+const window_width = canvas.clientWidth;
 
 canvas.height = window_height;
 canvas.width = window_width;
-canvas.style.background = "#ff8";
+canvas.style.background = "rgb(7, 7, 7)";
+
+// 🔢 N dinámico
+let N = 10;
+let circles = [];
 
 class Circle {
     constructor(x, y, radius, text, speed) {
         this.posX = x;
         this.posY = y;
         this.radius = radius;
-        this.baseColor = "blue"; // color normal
+        this.baseColor = "blue";
         this.color = this.baseColor;
         this.text = text;
         this.speed = speed;
@@ -33,14 +40,13 @@ class Circle {
 
         context.textAlign = "center";
         context.textBaseline = "middle";
-        context.font = "20px Arial";
+        context.font = "16px Arial";
         context.fillText(this.text, this.posX, this.posY);
 
         context.closePath();
     }
 
     update(context) {
-        // Rebote contra paredes (esto sí se mantiene)
         if ((this.posX + this.radius) > window_width || (this.posX - this.radius) < 0) {
             this.dx = -this.dx;
         }
@@ -56,9 +62,21 @@ class Circle {
     }
 }
 
-// 🔥 FUNCIÓN DE COLISIÓN
-function detectarColisiones(circles) {
-    // Primero todos vuelven a azul
+// 🔥 CREAR CÍRCULOS
+function crearCirculos() {
+    circles = [];
+
+    for (let i = 0; i < N; i++) {
+        let radius = Math.random() * 20 + 15;
+        let x = Math.random() * (window_width - radius * 2) + radius;
+        let y = Math.random() * (window_height - radius * 2) + radius;
+
+        circles.push(new Circle(x, y, radius, i + 1, 2));
+    }
+}
+
+// 🔥 COLISIÓN (SIN REBOTE)
+function detectarColisiones() {
     circles.forEach(c => c.color = c.baseColor);
 
     for (let i = 0; i < circles.length; i++) {
@@ -70,7 +88,6 @@ function detectarColisiones(circles) {
             let distancia = Math.sqrt(dx * dx + dy * dy);
 
             if (distancia <= circles[i].radius + circles[j].radius) {
-                // 🔴 Colisión → cambiar color
                 circles[i].color = "red";
                 circles[j].color = "red";
             }
@@ -78,28 +95,24 @@ function detectarColisiones(circles) {
     }
 }
 
-// 🔥 CREAR N CÍRCULOS
-let N = 10; // puedes cambiar este número
+// 🔥 FUNCIÓN GLOBAL (PARA EL SLIDER)
+window.actualizarCantidad2 = function(nuevoN) {
+    N = parseInt(nuevoN);
+    crearCirculos();
+};
 
-let circles = [];
-
-for (let i = 0; i < N; i++) {
-    let radius = Math.random() * 30 + 20;
-    let x = Math.random() * (window_width - radius * 2) + radius;
-    let y = Math.random() * (window_height - radius * 2) + radius;
-
-    circles.push(new Circle(x, y, radius, i + 1, 3));
-}
-
-// 🔄 ANIMACIÓN
-function updateCircle() {
-    requestAnimationFrame(updateCircle);
+// 🎬 ANIMACIÓN
+function animar() {
+    requestAnimationFrame(animar);
 
     ctx.clearRect(0, 0, window_width, window_height);
 
-    detectarColisiones(circles);
-
+    detectarColisiones();
     circles.forEach(c => c.update(ctx));
 }
 
-updateCircle();
+// 🚀 INIT
+crearCirculos();
+animar();
+
+})();
